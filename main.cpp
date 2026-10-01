@@ -1,53 +1,93 @@
 #include <iostream>
-#include <fstream>
+#include <fstream> // Write to file functionality
+#include <iomanip> // Set precision of doubles when writing to files or using std::cout
+double findCoordinate(double cornerCoord[4], int imgWidth, int imgHeight, double coord, char axis);
+int createGPXFile(double coord[]);
 
 int main() {
-	// Variable Declarations
-	double lat1;
-	double lon1;
-	double lat2;
-	double lon2;
-	double lat3;
-	double lon3;
-	double lat4;
-	double lon4;
+	int points;
+	// Get # of points
+	std::cout << "Type your number of points: ";
+	std::cin >> points;
+	double* coord = new double[points * 2];
+	double* finalCoord = new double[points * 2];
+	double cornerCoord[4];
+	int imgWidth;
+	int imgHeight;
 
-	// Point 1
-	std::cout << "Type a latitude coordinate: ";
-	std::cin >> lat1;
-	std::cout << "Type a longitude coordinate: ";
-	std::cin >> lon1;
 
-	// Point 2
-	std::cout << "Type another latitude coordinate: ";
-	std::cin >> lat2;
-	std::cout << "Type another longitude coordinate: ";
-	std::cin >> lon2;
+	// Find origin lon, lat
+	std::cout << "Type an originX coordinate: ";
+	std::cin >> cornerCoord[0];
+	std::cout << "Type an originY coordinate: ";
+	std::cin >> cornerCoord[1];
+	
+	// Find top-right lon, lat
+	std::cout << "Type the top-right X coordinate: ";
+	std::cin >> cornerCoord[2];
+	std::cout << "Type the top-right Y coordinate: ";
+	std::cin >> cornerCoord[3];
 
-	// Point 3
-	std::cout << "Type your third latitude coordinate: ";
-	std::cin >> lat3;
-	std::cout << "Type your third longitude coordinate: ";
-	std::cin >> lon3;
+	// Find image dimensions
+	std::cout << "Type the image width: ";
+	std::cin >> imgWidth;
+	std::cout << "Type the image height: ";
+	std::cin >> imgHeight;
 
-	// Point 4
-	std::cout << "Type your fourth latitude coordinate: ";
-	std::cin >> lat4;
-	std::cout << "Type your fourth longitude coordinate: ";
-	std::cin >> lon4;
+	// Find screen points
+	for (int i = 0; i < points; i++) {
+		std::cout << "Type screenX coordinate #" << i + 1 << ": ";
+		std::cin >> coord[i];
+		std::cout << "Type screenY coordinate #" << i + 1 << ": ";
+		std::cin >> coord[i + 1];
+	}
 
-	// Export GPX File
+	// Find lat, lon coords
+	for (int i = 0; i < points * 2; i += 2) {
+		finalCoord[i] = findCoordinate(cornerCoord, imgWidth, imgHeight, coord[i], 'X');
+		finalCoord[i + 1] = findCoordinate(cornerCoord, imgWidth, imgHeight, coord[i + 1], 'Y');
+	}
+
+	// Create GPX file
+	createGPXFile(finalCoord);
+
+	// Delete dynamically allocated arrays
+	delete[] coord;
+	delete[] finalCoord;
+}
+
+double findCoordinate(double cornerCoord[4], int imgWidth, int imgHeight, double coord, char axis) {
+	if (axis == 'X') {
+		double percentage = coord / imgWidth;
+		double distance = cornerCoord[2] - cornerCoord[0];
+		return cornerCoord[0] + percentage * distance;
+	}
+	if (axis == 'Y') {
+		double percentage = coord / imgHeight;
+		double distance = cornerCoord[3] - cornerCoord[1];
+		return cornerCoord[1] + percentage * distance;
+	}
+	return -1;
+}
+
+int createGPXFile(double coord[]) {
 	std::ofstream course;
 	course.open("test.gpx");
-	course << "<?xml version = \"1.0\" encoding = \"UTF-8\"?>" << '\n';
-	course << "<gpx version=\"1.1\" creator=\"Christian Boe\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" << '\n';
-	course << "<rte>" << '\n';
-	course << "<name>Imported Course</name>" << '\n';
-	course << "<rtept lat = \"" << lat1 << "\" lon = \"" << lon1 << "\"/>" << '\n';
-	course << "<rtept lat = \"" << lat2 << "\" lon = \"" << lon2 << "\"/>" << '\n';
-	course << "<rtept lat = \"" << lat3 << "\" lon = \"" << lon3 << "\"/>" << '\n';
-	course << "<rtept lat = \"" << lat4 << "\" lon = \"" << lon4 << "\"/>" << '\n';
-	course << "</rte>" << '\n';
-	course << "</gpx>" << '\n';
-	return 0;
+	if (course.is_open()) {
+		course << std::fixed << std::setprecision(7);
+		course << "<?xml version = \"1.0\" encoding = \"UTF-8\"?>" << '\n';
+		course << "<gpx version=\"1.1\" creator=\"Christian Boe\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" << '\n';
+		course << "<rte>" << '\n';
+		course << "<name>Imported Course</name>" << '\n';
+		for (int i = 0; i < sizeof(coord) / sizeof(coord[0]) * 2; i += 2) {
+			course << "<rtept lat = \"" << coord[i] << "\" lon = \"" << coord[i + 1] << "\"/>" << '\n';
+		}
+		course << "</rte>" << '\n';
+		course << "</gpx>" << '\n';
+		course.close();
+	} else {
+		std::cerr << "Course file did not open." << '\n';
+		return 0;
+	}
+	return 1;
 }
