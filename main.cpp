@@ -2,7 +2,7 @@
 #include <fstream> // Write to file functionality
 #include <iomanip> // Set precision of doubles when writing to files or using std::cout
 double findCoordinate(double cornerCoord[4], int imgWidth, int imgHeight, double coord, char axis);
-int createGPXFile(double coord[]);
+int createGPXFile(double coord[], int points);
 
 int main() {
 	int points;
@@ -17,15 +17,15 @@ int main() {
 
 
 	// Find origin lon, lat
-	std::cout << "Type an originX coordinate: ";
+	std::cout << "Type an origin longitude coordinate: ";
 	std::cin >> cornerCoord[0];
-	std::cout << "Type an originY coordinate: ";
+	std::cout << "Type an origin latitude coordinate: ";
 	std::cin >> cornerCoord[1];
 	
 	// Find top-right lon, lat
-	std::cout << "Type the top-right X coordinate: ";
+	std::cout << "Type the top-right longitude coordinate: ";
 	std::cin >> cornerCoord[2];
-	std::cout << "Type the top-right Y coordinate: ";
+	std::cout << "Type the top-right latitude coordinate: ";
 	std::cin >> cornerCoord[3];
 
 	// Find image dimensions
@@ -35,7 +35,7 @@ int main() {
 	std::cin >> imgHeight;
 
 	// Find screen points
-	for (int i = 0; i < points; i++) {
+	for (int i = 0; i < points * 2; i += 2) {
 		std::cout << "Type screenX coordinate #" << i + 1 << ": ";
 		std::cin >> coord[i];
 		std::cout << "Type screenY coordinate #" << i + 1 << ": ";
@@ -49,7 +49,7 @@ int main() {
 	}
 
 	// Create GPX file
-	createGPXFile(finalCoord);
+	createGPXFile(finalCoord, points);
 
 	// Delete dynamically allocated arrays
 	delete[] coord;
@@ -61,16 +61,16 @@ double findCoordinate(double cornerCoord[4], int imgWidth, int imgHeight, double
 		double percentage = coord / imgWidth;
 		double distance = cornerCoord[2] - cornerCoord[0];
 		return cornerCoord[0] + percentage * distance;
-	}
-	if (axis == 'Y') {
+	} else if (axis == 'Y') {
 		double percentage = coord / imgHeight;
 		double distance = cornerCoord[3] - cornerCoord[1];
 		return cornerCoord[1] + percentage * distance;
+	} else {
+	    return -1.0;
 	}
-	return -1;
 }
 
-int createGPXFile(double coord[]) {
+int createGPXFile(double coord[], int points) {
 	std::ofstream course;
 	course.open("test.gpx");
 	if (course.is_open()) {
@@ -79,8 +79,10 @@ int createGPXFile(double coord[]) {
 		course << "<gpx version=\"1.1\" creator=\"Christian Boe\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" << '\n';
 		course << "<rte>" << '\n';
 		course << "<name>Imported Course</name>" << '\n';
-		for (int i = 0; i < sizeof(coord) / sizeof(coord[0]) * 2; i += 2) {
-			course << "<rtept lat = \"" << coord[i] << "\" lon = \"" << coord[i + 1] << "\"/>" << '\n';
+		std::cout << "coord[0]: " << coord[0] << " coord[1]: " << coord[1] << " coord[2]: " << coord[2] << " coord[3]: " << coord[3] << '\n';
+		for (int i = 0; i < points * 2; i += 2) {
+		    std::cout << "i is " << i << '\n';
+			course << "<rtept lat = \"" << coord[i + 1] << "\" lon = \"" << coord[i] << "\"/>" << '\n';
 		}
 		course << "</rte>" << '\n';
 		course << "</gpx>" << '\n';
