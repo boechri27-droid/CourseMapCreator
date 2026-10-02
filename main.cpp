@@ -21,7 +21,7 @@ int main() {
 	std::cin >> cornerCoord[0];
 	std::cout << "Type an origin latitude coordinate: ";
 	std::cin >> cornerCoord[1];
-	
+
 	// Find top-right lon, lat
 	std::cout << "Type the top-right longitude coordinate: ";
 	std::cin >> cornerCoord[2];
@@ -36,9 +36,9 @@ int main() {
 
 	// Find screen points
 	for (int i = 0; i < points * 2; i += 2) {
-		std::cout << "Type screenX coordinate #" << i + 1 << ": ";
+		std::cout << "Type screenX coordinate #" << i / 2 + 1 << ": ";
 		std::cin >> coord[i];
-		std::cout << "Type screenY coordinate #" << i + 1 << ": ";
+		std::cout << "Type screenY coordinate #" << i / 2 + 1 << ": ";
 		std::cin >> coord[i + 1];
 	}
 
@@ -64,9 +64,9 @@ double findCoordinate(double cornerCoord[4], int imgWidth, int imgHeight, double
 	} else if (axis == 'Y') {
 		double percentage = coord / imgHeight;
 		double distance = cornerCoord[3] - cornerCoord[1];
-		return cornerCoord[1] + percentage * distance;
+		return cornerCoord[3] - percentage * distance;
 	} else {
-	    return -1.0;
+		return -1.0;
 	}
 }
 
@@ -79,9 +79,7 @@ int createGPXFile(double coord[], int points) {
 		course << "<gpx version=\"1.1\" creator=\"Christian Boe\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" << '\n';
 		course << "<rte>" << '\n';
 		course << "<name>Imported Course</name>" << '\n';
-		std::cout << "coord[0]: " << coord[0] << " coord[1]: " << coord[1] << " coord[2]: " << coord[2] << " coord[3]: " << coord[3] << '\n';
 		for (int i = 0; i < points * 2; i += 2) {
-		    std::cout << "i is " << i << '\n';
 			course << "<rtept lat = \"" << coord[i + 1] << "\" lon = \"" << coord[i] << "\"/>" << '\n';
 		}
 		course << "</rte>" << '\n';
